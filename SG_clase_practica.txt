@@ -1,0 +1,93 @@
+#clase MGyGV
+#SG
+
+#CARGA DE PAQUETES
+library(simulMGF)
+library(rrBLUP)
+source("https://raw.githubusercontent.com/mngar/forest/main/rrblup.R")		#función para correr Ridge Regression BLUP (rrBLUP)
+
+#setear la semilla (VAMOS A SIMULAR MENOS DATOS QUE UTILIZAMOS EN LA PRACTICA DE GWAS DEBIDO A LOS TIEMPOS DE COMPUTACION)
+set.seed(1234)
+
+
+#SIMULACION DE DATOS 
+Nind <- 100
+Nmarkers <- 2000
+Nqtl <- 50
+Esigma <- .5
+Pmean <- 25
+Perror <- .25
+
+simulN(Nind, Nmarkers, Nqtl, Esigma, Pmean, Perror)
+ str(nsimout)
+
+#los QTLs
+  QTL <- cbind(nsimout$QTN, nsimout$Meffects)
+  QTL <- cbind(QTL,abs(nsimout$Meffects))
+  colnames(QTL) <- c("marker", "effect", "effabs")
+  QTL <- as.data.frame(QTL)
+  QTL <- QTL[order(-QTL$effabs),]
+head(QTL)
+
+#matriz de datos genomicos
+population <- nsimout$geno
+colnames(population) <- c(paste("M", 1:Nmarkers,sep = ""))
+rownames(population) <- c(paste("IND", 1:Nind,sep = ""))
+
+#matriz de datos fenotipicos
+popfeno <- nsimout$pheno
+colnames(popfeno) <- "PHENO"
+rownames(popfeno) <- c(paste("IND", 1:Nind,sep = ""))
+feno <- data.frame ( IND = rownames(popfeno),
+                     Pheno = popfeno)
+
+#mapa
+map <- data.frame (SNP = colnames(population),
+                  Chromosome = c(rep(1,(Nmarkers/5)),rep(2,(Nmarkers/5)),rep(3,(Nmarkers/5)),rep(4,(Nmarkers/5)),rep(5,(Nmarkers/5))),
+                  Position = c(1:(Nmarkers/5),1:(Nmarkers/5),1:(Nmarkers/5),1:(Nmarkers/5),1:(Nmarkers/5))
+                  )
+
+########################################
+
+##########
+##  SG  ##
+##########
+#setear el directorio de trabajo
+setwd("E:/PP/SG")
+
+rrblup(population, feno$PHENO, 10, 90, "MGyGV")			# el tiempo varia según la PC, entre 2 y 10 minutos
+
+particiones = read.csv("MGyGV_Index.csv", header = T,sep = " ")
+dim(particiones)
+head(particiones)
+
+
+obs_pred = read.csv("MGyGV_observado_vs_predicho.csv", header = F)
+library(tidyr)
+obs_pred <- separate(obs_pred, col = V1, into = c("fold", "obs", "pred"), sep = ",")
+dim(obs_pred)
+plot(obs_pred$obs, obs_pred$pred)
+
+
+efectos = read.csv("MGyGV_SALIDA_EFECTOS_RR.csv", header = F,sep = " ")
+efectos <- separate(efectos, col = V1, into = c("fold", "SNP","efecto", "efecto.absoluto"), sep = ",")
+dim(efectos)
+head(efectos)
+
+efectos1 = efectos[efectos$fold == "1", ]
+plot(1:nrow(efectos1), efectos1$efecto)
+
+
+precision = read.csv("MGyGV_salida_PRECISION_SG.csv", header = F,sep = " ")
+dim(precision)
+precision
+
+
+
+
+#################
+#################  Extra!
+#################	datos reales SNP: https://iagr.genomics.cn/CropGS/#/Datasets
+
+
+

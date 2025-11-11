@@ -1,0 +1,75 @@
+############### SIMULAR DATOS PERDIDOS
+
+#G: matriz o data.frame de genotipos (0/1/2).
+#p: proporción de datos faltantes deseada (valor entre 0 y 1).
+#seed: opcional, para reproducibilidad.
+#Devuelve una matriz con valores reemplazados por NA según el porcentaje especificado.
+
+introducir_missing <- function(G, p, seed = NULL) {
+  # Validaciones
+  if (!is.matrix(G) && !is.data.frame(G)) {
+    stop("G debe ser una matriz o data.frame.")
+  }
+  if (p < 0 || p > 1) {
+    stop("p debe estar entre 0 y 1 (proporción de datos faltantes).")
+  }
+  
+  # Fijar semilla si se especifica
+  if (!is.null(seed)) set.seed(seed)
+  
+  # Convertir a matriz (en caso de ser data.frame)
+  G_mat <- as.matrix(G)
+  
+  # Número total de elementos y cantidad a convertir en NA
+  n_total <- length(G_mat)
+  n_missing <- round(n_total * p)
+  
+  # Índices para reemplazar
+  idx <- sample(seq_len(n_total), n_missing, replace = FALSE)
+  
+  # Introducir NA
+  G_mat[idx] <- NA
+  
+  M_conNA <<- G_mat
+}
+
+######################################################### FIN DE CODIGO
+### la función qc.filtering requiere que tengan nombre las filas y las columnas (es decir, que los individuos y los marcadores posean nombre)
+rownames(M_conNA) = paste0("I", c(1:nrow(M_conNA)))
+colnames(M_conNA) = paste0("M", c(1:ncol(M_conNA)))
+
+################## CURAR DATOS
+
+library(ASRgenomics)		#esta en CRAN
+
+# matriz genotipos es `M` (n × p), con filas individuos, columnas marcadores,
+# valores 0,1,2 y NA para perdidos.
+
+# Si hay mapa (chromosoma, posición) se puede incluir, si no dejar NULL.
+map <- NULL
+
+res <- qc.filtering(
+  M = M_conNA,
+  map = map,
+  marker.callrate = 0.9,  # por ejemplo excluir marcadores con > 10% missing
+  ind.callrate = 0.9,     # excluir individuos con > 10% missing
+  maf = 0.05,             # excluir SNPs con MAF < 5%
+  heterozygosity = 1,     # aquí puedes fijar si lo deseas
+  Fis = 1,
+  na.string = NA,
+  impute = TRUE,          # activar imputación por la media del SNP
+  Mrecode = FALSE,
+  plots = TRUE,
+  digits = 2,
+  message = TRUE
+)
+
+# Luego acceder a la matriz limpiada e imputada:
+M_clean <- res$M.clean
+
+# si no introducimos un mapa imputa con la media de filas y columnas pero no redondea, podemos tener problemas con algunos paquetes por lo que redondeamos sin decimales ( 0 decimales):
+
+M_clean = round(M_clean, 0)
+
+
+######################################################### FIN DE CODIGO
