@@ -4,7 +4,7 @@
 #CARGA DE PAQUETES
 library(simulMGF)
 library(rrBLUP)
-source("https://raw.githubusercontent.com/mngar/forest/main/rrblup.R")		#función para correr Ridge Regression BLUP (rrBLUP)
+source("https://raw.githubusercontent.com/mngar/forest/main/rrblup.R")		#funcion para correr Ridge Regression BLUP (rrBLUP)
 
 #setear la semilla (VAMOS A SIMULAR MENOS DATOS QUE UTILIZAMOS EN LA PRACTICA DE GWAS DEBIDO A LOS TIEMPOS DE COMPUTACION)
 set.seed(1234)
@@ -55,7 +55,7 @@ map <- data.frame (SNP = colnames(population),
 #setear el directorio de trabajo
 setwd("E:/PP/SG")
 
-rrblup(population, feno$PHENO, 10, 90, "MGyGV")			# el tiempo varia según la PC, entre 2 y 10 minutos
+rrblup(population, feno$PHENO, 10, 90, "MGyGV")			# el tiempo varia segun la PC, entre 2 y 10 minutos
 
 particiones = read.csv("MGyGV_Index.csv", header = T,sep = " ")
 dim(particiones)
